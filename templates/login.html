@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}登录 - 秒杀系统{% endblock %}
+{% block content %}
+<div class="form-wrapper">
+    <h2>用户登录</h2>
+    <form method="POST">
+        <label>用户名</label>
+        <input type="text" name="username" required autofocus>
+        <label>密码</label>
+        <input type="password" name="password" required>
+        <button type="submit">登录</button>
+    </form>
+    <p class="form-footer">还没有账号？<a href="{{ url_for('auth.register_page') }}">立即注册</a></p>
+</div>
+{% endblock %}
