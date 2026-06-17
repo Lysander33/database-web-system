@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} - 秒杀系统{% endblock %}
+{% block content %}
+<div class="product-detail">
+    <h2>{{ product.name }}</h2>
+    <div class="price big">&yen;{{ "%.2f"|format(product.price) }}</div>
+    <div class="desc">{{ product.description or "暂无描述" }}</div>
+    <div class="meta">
+        <div>剩余库存：<strong>{{ product.stock }}</strong></div>
+        <div>秒杀时间：{{ product.start_time.strftime("%Y-%m-%d %H:%M") }} ~ {{ product.end_time.strftime("%Y-%m-%d %H:%M") }}</div>
+        <div>状态：
+            {% if now < product.start_time %}
+                <span class="status-upcoming">即将开始</span>
+            {% elif now > product.end_time %}
+                <span class="status-ended">已结束</span>
+            {% elif product.stock == 0 %}
+                <span class="status-ended">已售罄</span>
+            {% else %}
+                <span class="status-active">秒杀进行中</span>
+            {% endif %}
+        </div>
+    </div>
+    {% if product.start_time <= now <= product.end_time and product.stock > 0 and current_user.is_authenticated %}
+    <button class="seckill-btn" id="detail-seckill-btn" data-product-id="{{ product.id }}">立即抢购</button>
+    {% elif not current_user.is_authenticated %}
+    <a class="btn" href="{{ url_for('auth.login_page') }}">请先登录</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const btn = document.getElementById('detail-seckill-btn');
+if (btn) {
+    btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = '抢购中...';
+        try {
+            const resp = await fetch('/api/seckill', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({product_id: parseInt(btn.dataset.productId)})
+            });
+            const data = await resp.json();
+            alert(data.msg);
+            if (data.success) location.reload();
+        } catch (e) {
+            alert('网络错误，请重试');
+        }
+        btn.disabled = false;
+        btn.textContent = '立即抢购';
+    });
+}
+</script>
+{% endblock %}

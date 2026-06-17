@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>秒杀商品</h2>
+
+{% if not products %}
+<p class="empty-msg">暂无秒杀商品</p>
+{% endif %}
+
+<div class="product-grid">
+{% for p in products %}
+<div class="product-card {% if now < p.start_time %}upcoming{% elif now > p.end_time or p.stock == 0 %}ended{% endif %}">
+    <h3><a href="{{ url_for('seckill.product_detail', product_id=p.id) }}">{{ p.name }}</a></h3>
+    <div class="price">&yen;{{ "%.2f"|format(p.price) }}</div>
+    <div class="stock">剩余库存：{{ p.stock }}</div>
+    <div class="time">
+        {% if now < p.start_time %}
+            距开始：{{ (p.start_time - now)|string }}
+        {% elif now > p.end_time %}
+            已结束
+        {% else %}
+            <span class="active">进行中</span> &mdash; {{ (p.end_time - now)|string }} 后结束
+        {% endif %}
+    </div>
+    {% if p.start_time <= now <= p.end_time and p.stock > 0 %}
+    <button class="seckill-btn" data-product-id="{{ p.id }}">立即抢购</button>
+    {% endif %}
+</div>
+{% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.seckill-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = '抢购中...';
+        try {
+            const resp = await fetch('/api/seckill', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({product_id: parseInt(btn.dataset.productId)})
+            });
+            const data = await resp.json();
+            alert(data.msg);
+            if (data.success) location.reload();
+        } catch (e) {
+            alert('网络错误，请重试');
+        }
+        btn.disabled = false;
+        btn.textContent = '立即抢购';
+    });
+});
+</script>
+{% endblock %}
