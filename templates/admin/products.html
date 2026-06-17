@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}商品管理 - 秒杀系统{% endblock %}
+{% block content %}
+<h2>商品管理</h2>
+
+<h3>添加商品</h3>
+<form method="POST" class="admin-form">
+    <label>商品名称 *</label>
+    <input type="text" name="name" required>
+
+    <label>价格 *</label>
+    <input type="number" name="price" step="0.01" required>
+
+    <label>库存数量 *</label>
+    <input type="number" name="stock" required>
+
+    <label>开始时间 *</label>
+    <input type="datetime-local" name="start_time" required>
+
+    <label>结束时间 *</label>
+    <input type="datetime-local" name="end_time" required>
+
+    <label>描述</label>
+    <textarea name="description" rows="2"></textarea>
+
+    <button type="submit">创建商品</button>
+</form>
+
+<hr>
+
+<h3>商品列表</h3>
+{% if not products %}
+<p class="empty-msg">暂无商品</p>
+{% endif %}
+
+<table class="order-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>名称</th>
+            <th>价格</th>
+            <th>库存</th>
+            <th>时段</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for p in products %}
+        <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.name }}</td>
+            <td>&yen;{{ "%.2f"|format(p.price) }}</td>
+            <td>{{ p.stock }}</td>
+            <td>{{ p.start_time.strftime("%m/%d %H:%M") }} ~ {{ p.end_time.strftime("%H:%M") }}</td>
+            <td>{{ "上架" if p.is_active else "下架" }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('admin.toggle_product', product_id=p.id) }}" style="display:inline">
+                    <button type="submit" class="btn-sm">{{ "下架" if p.is_active else "上架" }}</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
