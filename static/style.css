@@ -1,0 +1,111 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #f5f6fa;
+    color: #2d3436;
+    line-height: 1.6;
+}
+
+.container { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+
+.navbar {
+    background: #2d3436;
+    color: #fff;
+    padding: 12px 0;
+}
+.navbar .container { display: flex; justify-content: space-between; align-items: center; }
+.navbar a { color: #dfe6e9; text-decoration: none; margin-left: 16px; }
+.navbar a:hover { color: #fff; }
+.navbar .logo { font-size: 1.2em; font-weight: bold; margin-left: 0; }
+.user-info { margin-left: 16px; color: #74b9ff; }
+
+.main { margin-top: 24px; }
+
+h2 { margin-bottom: 16px; border-bottom: 2px solid #0984e3; padding-bottom: 8px; }
+h3 { margin: 12px 0 8px; }
+
+.flash-messages { margin-bottom: 16px; }
+.flash-msg {
+    background: #ffeaa7;
+    border: 1px solid #fdcb6e;
+    padding: 10px 16px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+.empty-msg { color: #b2bec3; text-align: center; padding: 40px 0; }
+
+/* Product Grid */
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.product-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.product-card.upcoming { border-left: 4px solid #fdcb6e; }
+.product-card.ended { opacity: .6; }
+
+.product-card h3 a { color: #2d3436; text-decoration: none; }
+.product-card .price { font-size: 1.4em; color: #d63031; font-weight: bold; margin: 8px 0; }
+.product-card .stock, .product-card .time { font-size: .9em; color: #636e72; }
+.product-card .active { color: #00b894; font-weight: bold; }
+
+.seckill-btn, .btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 10px 28px;
+    background: #d63031;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    text-decoration: none;
+}
+.seckill-btn:hover { background: #e17055; }
+.seckill-btn:disabled { background: #b2bec3; cursor: not-allowed; }
+.btn { background: #0984e3; }
+
+/* Product Detail */
+.product-detail .price.big { font-size: 2em; }
+.product-detail .desc { margin: 16px 0; color: #636e72; }
+.product-detail .meta { margin: 16px 0; }
+.product-detail .meta div { margin: 4px 0; }
+.status-upcoming { color: #e17055; }
+.status-ended { color: #b2bec3; }
+.status-active { color: #00b894; font-weight: bold; }
+.status-success { color: #00b894; }
+
+/* Forms */
+.form-wrapper { max-width: 400px; margin: 40px auto; }
+.form-wrapper h2 { text-align: center; border: none; }
+form label { display: block; margin: 12px 0 4px; font-weight: bold; }
+form input, form textarea, form select {
+    width: 100%; padding: 10px; border: 1px solid #dfe6e9; border-radius: 4px; font-size: 1em;
+}
+form button { margin-top: 16px; }
+.form-footer { text-align: center; margin-top: 16px; color: #636e72; }
+
+.admin-form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 24px; }
+
+/* Tables */
+.order-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.order-table th, .order-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #dfe6e9; }
+.order-table th { background: #dfe6e9; font-weight: bold; }
+.order-table tr:hover { background: #f8f9fa; }
+.btn-sm { padding: 4px 12px; font-size: .85em; background: #0984e3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.btn-sm:hover { background: #0767b3; }
+
+/* Admin */
+.admin-cards { display: flex; gap: 16px; }
+.admin-card {
+    flex: 1; background: #fff; padding: 24px; text-align: center; border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.admin-card h3 { font-size: 2em; color: #0984e3; border: none; margin: 0; }
+.admin-card p { color: #636e72; margin: 4px 0 12px; }
+.admin-card a { color: #0984e3; }
+
+hr { margin: 24px 0; border: none; border-top: 1px solid #dfe6e9; }
