@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
@@ -21,7 +21,7 @@ def _deduct_stock(product_id):
 
 
 def _now():
-    return datetime.now(timezone.utc)
+    return datetime.utcnow()
 
 
 @seckill_bp.route("/")

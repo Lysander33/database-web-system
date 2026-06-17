@@ -1,7 +1,7 @@
 from app import create_app
 from core.models import db, User, Product
 from werkzeug.security import generate_password_hash
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 
 def init():
@@ -23,7 +23,7 @@ def init():
             ))
 
         if not Product.query.first():
-            now = datetime.now(timezone.utc)
+            now = datetime.utcnow()
             db.session.add(Product(
                 name="iPhone 15 Pro 秒杀",
                 description="限时秒杀，先到先得！",
