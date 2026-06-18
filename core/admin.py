@@ -5,6 +5,7 @@ from flask_login import login_required, current_user
 from functools import wraps
 
 from core.models import db, Product, Order
+from core.seckill import sync_stock_to_redis
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -53,6 +54,7 @@ def manage_products():
                 )
                 db.session.add(product)
                 db.session.commit()
+                sync_stock_to_redis(product.id)
                 flash(f"商品「{name}」已创建")
             except ValueError:
                 flash("价格、库存或时间格式有误")

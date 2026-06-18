@@ -5,19 +5,57 @@ from flask_login import login_required, current_user
 from sqlalchemy import update as sql_update
 
 from core.models import db, Product, Order
+from core.redis_client import get_redis
+from core.limiter import check_rate_limit
 
 seckill_bp = Blueprint("seckill", __name__)
 
+_LUA_SECKILL = """
+local stock_key = KEYS[1]
+local users_key = KEYS[2]
+local user_id = ARGV[1]
+
+if redis.call('SISMEMBER', users_key, user_id) == 1 then
+    return -1
+end
+
+local stock = redis.call('GET', stock_key)
+if not stock or tonumber(stock) <= 0 then
+    return 0
+end
+
+local new_stock = redis.call('DECR', stock_key)
+if new_stock < 0 then
+    redis.call('INCR', stock_key)
+    return 0
+end
+
+redis.call('SADD', users_key, user_id)
+return 1
+"""
+
+
+def _stock_key(product_id):
+    return f"seckill:stock:{product_id}"
+
+
+def _users_key(product_id):
+    return f"seckill:users:{product_id}"
+
+
+def sync_stock_to_redis(product_id):
+    """Sync product stock from DB to Redis. Call on app startup and after stock changes."""
+    r = get_redis()
+    product = db.session.get(Product, product_id)
+    if product:
+        r.set(_stock_key(product_id), product.stock)
+
 
 def _deduct_stock(product_id):
-    stmt = (
-        sql_update(Product)
-        .where(Product.id == product_id, Product.stock > 0)
-        .values(stock=Product.stock - 1)
-    )
-    result = db.session.execute(stmt)
-    db.session.commit()
-    return result.rowcount == 1
+    """Atomic stock deduction via Redis Lua script."""
+    r = get_redis()
+    result = r.eval(_LUA_SECKILL, 2, _stock_key(product_id), _users_key(product_id), str(current_user.id))
+    return result  # 1=success, 0=sold_out, -1=already_purchased
 
 
 def _now():
@@ -40,6 +78,10 @@ def product_detail(product_id):
 @seckill_bp.route("/api/seckill", methods=["POST"])
 @login_required
 def do_seckill():
+    allowed, remaining = check_rate_limit(current_user.id)
+    if not allowed:
+        return jsonify({"success": False, "msg": "请求过于频繁，请稍后再试"}), 429
+
     data = request.get_json()
     if not data:
         return jsonify({"success": False, "msg": "请求数据无效"}), 400
@@ -58,13 +100,18 @@ def do_seckill():
     if now > product.end_time:
         return jsonify({"success": False, "msg": "秒杀已结束"}), 400
 
-    existing = Order.query.filter_by(user_id=current_user.id, product_id=product_id).first()
-    if existing:
+    result = _deduct_stock(product_id)
+    if result == -1:
         return jsonify({"success": False, "msg": "您已抢购过该商品"}), 400
-
-    if not _deduct_stock(product_id):
+    if result == 0:
         return jsonify({"success": False, "msg": "已售罄"}), 400
 
+    # Persist to SQLite and sync DB stock
+    db.session.execute(
+        sql_update(Product)
+        .where(Product.id == product_id, Product.stock > 0)
+        .values(stock=Product.stock - 1)
+    )
     order = Order(user_id=current_user.id, product_id=product_id, status="success")
     db.session.add(order)
     db.session.commit()

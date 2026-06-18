@@ -1,5 +1,6 @@
 from app import create_app
 from core.models import db, User, Product
+from core.seckill import sync_stock_to_redis
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 
@@ -34,6 +35,10 @@ def init():
             ))
 
         db.session.commit()
+
+        for p in Product.query.all():
+            sync_stock_to_redis(p.id)
+
         print("Database initialized with default users and demo product.")
 
 

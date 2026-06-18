@@ -1,7 +1,9 @@
 from flask import Flask, render_template
 from flask_login import LoginManager
 from config import Config
-from core.models import db, User
+from core.models import db, User, Product
+from core.redis_client import init_redis
+from core.seckill import sync_stock_to_redis
 
 
 login_manager = LoginManager()
@@ -21,6 +23,11 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
 
+    try:
+        init_redis(app)
+    except Exception:
+        app.logger.warning("Redis 未启动，秒杀限流和原子库存功能不可用")
+
     from core.auth import auth_bp
     from core.seckill import seckill_bp
     from core.admin import admin_bp
@@ -32,6 +39,14 @@ def create_app():
     @app.errorhandler(404)
     def not_found(e):
         return render_template("404.html"), 404
+
+    with app.app_context():
+        try:
+            products = db.session.query(Product).all()
+            for p in products:
+                sync_stock_to_redis(p.id)
+        except Exception:
+            app.logger.warning("Redis 库存同步失败")
 
     return app
 
