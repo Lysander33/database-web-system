@@ -1,69 +1,93 @@
 {% extends "base.html" %}
 {% block title %}商品管理 - 秒杀系统{% endblock %}
 {% block content %}
-<h2>商品管理</h2>
+<div class="page-header">
+    <h1>商品管理</h1>
+</div>
 
-<h3>添加商品</h3>
-<form method="POST" class="admin-form">
-    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-    <label>商品名称 *</label>
-    <input type="text" name="name" required>
-
-    <label>价格 *</label>
-    <input type="number" name="price" step="0.01" required>
-
-    <label>库存数量 *</label>
-    <input type="number" name="stock" required>
-
-    <label>开始时间 *</label>
-    <input type="datetime-local" name="start_time" required>
-
-    <label>结束时间 *</label>
-    <input type="datetime-local" name="end_time" required>
-
-    <label>描述</label>
-    <textarea name="description" rows="2"></textarea>
-
-    <button type="submit">创建商品</button>
-</form>
+<div class="admin-form">
+    <h3>添加商品</h3>
+    <form method="POST">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label>商品名称 *</label>
+            <input type="text" name="name" required>
+        </div>
+        <div class="form-group">
+            <label>价格 *</label>
+            <input type="number" name="price" step="0.01" required>
+        </div>
+        <div class="form-group">
+            <label>库存数量 *</label>
+            <input type="number" name="stock" required>
+        </div>
+        <div class="form-group">
+            <label>开始时间 *</label>
+            <input type="datetime-local" name="start_time" required>
+        </div>
+        <div class="form-group">
+            <label>结束时间 *</label>
+            <input type="datetime-local" name="end_time" required>
+        </div>
+        <div class="form-group">
+            <label>描述</label>
+            <textarea name="description" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">创建商品</button>
+    </form>
+</div>
 
 <hr>
 
-<h3>商品列表</h3>
+<h3 style="font-family:var(--font-display);font-size:17px;font-weight:600;margin-bottom:14px">商品列表</h3>
+
 {% if not products %}
-<p class="empty-msg">暂无商品</p>
+<div class="empty-state">
+    <svg class="empty-illustration" viewBox="0 0 140 100" fill="none">
+        <rect x="20" y="15" width="42" height="42" rx="12" stroke="#7D9B76" stroke-width="0.8" opacity="0.35"/>
+        <rect x="78" y="15" width="42" height="42" rx="12" stroke="#7D9B76" stroke-width="0.8" opacity="0.25"/>
+        <rect x="20" y="65" width="42" height="28" rx="10" stroke="#7D9B76" stroke-width="0.8" opacity="0.2"/>
+        <rect x="78" y="65" width="42" height="28" rx="10" stroke="#7D9B76" stroke-width="0.8" opacity="0.15"/>
+    </svg>
+    <h3>暂无商品</h3>
+    <p>使用上方表单添加第一个商品</p>
+</div>
 {% endif %}
 
-<table class="order-table">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>名称</th>
-            <th>价格</th>
-            <th>库存</th>
-            <th>时段</th>
-            <th>状态</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for p in products %}
-        <tr>
-            <td>{{ p.id }}</td>
-            <td>{{ p.name }}</td>
-            <td>&yen;{{ "%.2f"|format(p.price) }}</td>
-            <td>{{ p.stock }}</td>
-            <td>{{ p.start_time.strftime("%m/%d %H:%M") }} ~ {{ p.end_time.strftime("%H:%M") }}</td>
-            <td>{{ "上架" if p.is_active else "下架" }}</td>
-            <td>
-                <form method="POST" action="{{ url_for('admin.toggle_product', product_id=p.id) }}" style="display:inline">
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn-sm">{{ "下架" if p.is_active else "上架" }}</button>
-                </form>
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+{% if products %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>名称</th>
+                <th>价格</th>
+                <th>库存</th>
+                <th>时段</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in products %}
+            <tr>
+                <td>{{ p.id }}</td>
+                <td>{{ p.name }}</td>
+                <td>&yen;{{ "%.2f"|format(p.price) }}</td>
+                <td>{{ p.stock }}</td>
+                <td>{{ p.start_time.strftime("%m/%d %H:%M") }} ~ {{ p.end_time.strftime("%H:%M") }}</td>
+                <td><span class="card-badge {{ 'badge-active' if p.is_active else 'badge-ended' }}">{{ "上架" if p.is_active else "下架" }}</span></td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin.toggle_product', product_id=p.id) }}" style="display:inline">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm {{ 'btn-ghost' if p.is_active else 'btn-primary' }}">{{ "下架" if p.is_active else "上架" }}</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% include '_pagination.html' %}
+{% endif %}
 {% endblock %}

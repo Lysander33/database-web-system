@@ -1,35 +1,50 @@
 {% extends "base.html" %}
 {% block title %}订单管理 - 秒杀系统{% endblock %}
 {% block content %}
-<h2>所有订单</h2>
+<div class="page-header">
+    <h1>所有订单</h1>
+</div>
 
 {% if not orders %}
-<p class="empty-msg">暂无订单</p>
+<div class="empty-state">
+    <svg class="empty-illustration" viewBox="0 0 140 100" fill="none">
+        <rect x="30" y="10" width="80" height="50" rx="10" stroke="#7D9B76" stroke-width="0.8" opacity="0.3"/>
+        <line x1="43" y1="25" x2="97" y2="25" stroke="#7D9B76" stroke-width="0.6" opacity="0.2"/>
+        <line x1="43" y1="35" x2="85" y2="35" stroke="#7D9B76" stroke-width="0.6" opacity="0.15"/>
+        <circle cx="70" cy="78" r="6" stroke="#7D9B76" stroke-width="0.6" opacity="0.2"/>
+    </svg>
+    <h3>暂无订单</h3>
+    <p>用户秒杀成功后订单会出现在这里</p>
+</div>
 {% endif %}
 
-<table class="order-table">
-    <thead>
-        <tr>
-            <th>订单ID</th>
-            <th>用户</th>
-            <th>商品</th>
-            <th>价格</th>
-            <th>状态</th>
-            <th>时间</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for o in orders %}
-        <tr>
-            <td>#{{ o.id }}</td>
-            <td>{{ o.user.username }}</td>
-            <td>{{ o.product.name }}</td>
-            <td>&yen;{{ "%.2f"|format(o.product.price) }}</td>
-            <td><span class="status-{{ o.status }}">{{ o.status }}</span></td>
-            <td>{{ o.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+{% if orders %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>订单ID</th>
+                <th>用户</th>
+                <th>商品</th>
+                <th>价格</th>
+                <th>状态</th>
+                <th>时间</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for o in orders %}
+            <tr>
+                <td>#{{ o.id }}</td>
+                <td>{{ o.user.username }}</td>
+                <td>{{ o.product.name }}</td>
+                <td>&yen;{{ "%.2f"|format(o.product.price) }}</td>
+                <td><span class="card-badge badge-success">{{ o.status }}</span></td>
+                <td>{{ o.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% include '_pagination.html' %}
+{% endif %}
 {% endblock %}

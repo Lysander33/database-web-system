@@ -1,28 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>秒杀商品</h2>
+<div class="page-header">
+    <h1>秒杀商品</h1>
+    <p>限时抢购，手慢无</p>
+</div>
 
 {% if not products %}
-<p class="empty-msg">暂无秒杀商品</p>
+<div class="empty-state">
+    <svg class="empty-illustration" viewBox="0 0 140 100" fill="none">
+        <rect x="20" y="15" width="42" height="42" rx="12" stroke="#7D9B76" stroke-width="0.8" opacity="0.35"/>
+        <rect x="78" y="15" width="42" height="42" rx="12" stroke="#7D9B76" stroke-width="0.8" opacity="0.25"/>
+        <rect x="20" y="65" width="42" height="28" rx="10" stroke="#7D9B76" stroke-width="0.8" opacity="0.2"/>
+        <rect x="78" y="65" width="42" height="28" rx="10" stroke="#7D9B76" stroke-width="0.8" opacity="0.15"/>
+        <circle cx="38" cy="32" r="4" fill="#7D9B76" opacity="0.2"/>
+        <circle cx="96" cy="32" r="4" fill="#7D9B76" opacity="0.15"/>
+    </svg>
+    <h3>暂无秒杀商品</h3>
+    <p>商品上架后会出现在这里，敬请期待</p>
+</div>
 {% endif %}
 
-<div class="product-grid">
+<div class="bento-grid">
 {% for p in products %}
-<div class="product-card {% if now < p.start_time %}upcoming{% elif now > p.end_time or p.stock == 0 %}ended{% endif %}">
-    <h3><a href="{{ url_for('seckill.product_detail', product_id=p.id) }}">{{ p.name }}</a></h3>
-    <div class="price">&yen;{{ "%.2f"|format(p.price) }}</div>
-    <div class="stock">剩余库存：{{ p.stock }}</div>
-    <div class="time">
-        {% if now < p.start_time %}
-            距开始：{{ (p.start_time - now)|string }}
-        {% elif now > p.end_time %}
-            已结束
+<div class="card {% if now < p.start_time %}upcoming{% elif now > p.end_time or p.stock == 0 %}ended{% endif %}">
+    <div class="card-header">
+        <a href="{{ url_for('seckill.product_detail', product_id=p.id) }}" class="card-title">{{ p.name }}</a>
+        {% if p.start_time <= now <= p.end_time and p.stock > 0 %}
+        <span class="card-badge badge-active">进行中</span>
+        {% elif now < p.start_time %}
+        <span class="card-badge badge-upcoming">即将开始</span>
         {% else %}
-            <span class="active">进行中</span> &mdash; {{ (p.end_time - now)|string }} 后结束
+        <span class="card-badge badge-ended">已结束</span>
         {% endif %}
     </div>
+
+    <div class="card-price">&yen;{{ "%.2f"|format(p.price) }}</div>
+
+    <div class="card-meta">
+        <span>库存 {{ p.stock }} 件</span>
+        {% if now < p.start_time %}
+        <span>{{ (p.start_time - now)|string }} 后开始</span>
+        {% elif now > p.end_time %}
+        <span>已结束</span>
+        {% else %}
+        <span>{{ (p.end_time - now)|string }} 后结束</span>
+        {% endif %}
+    </div>
+
     {% if p.start_time <= now <= p.end_time and p.stock > 0 %}
-    <button class="seckill-btn" data-product-id="{{ p.id }}">立即抢购</button>
+    <div class="card-actions">
+        <button class="btn btn-primary btn-seckill pulse" data-product-id="{{ p.id }}" style="width:100%">立即抢购</button>
+    </div>
     {% endif %}
 </div>
 {% endfor %}
@@ -32,7 +60,7 @@
 {% block scripts %}
 <script>
 const SECKILL_API = "{{ url_for('seckill.do_seckill') }}";
-document.querySelectorAll('.seckill-btn').forEach(btn => {
+document.querySelectorAll('.btn-seckill').forEach(btn => {
     btn.addEventListener('click', async () => {
         btn.disabled = true;
         btn.textContent = '抢购中...';
@@ -43,8 +71,8 @@ document.querySelectorAll('.seckill-btn').forEach(btn => {
                 body: JSON.stringify({product_id: parseInt(btn.dataset.productId)})
             });
             const data = await resp.json();
-            alert(data.msg);
             if (data.success) location.reload();
+            else alert(data.msg);
         } catch (e) {
             alert('网络错误，请重试');
         }

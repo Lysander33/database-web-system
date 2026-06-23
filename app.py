@@ -49,6 +49,14 @@ def create_app():
     def inject_csrf():
         return {"csrf_token": generate_csrf_token}
 
+    @app.context_processor
+    def inject_stats():
+        try:
+            count = Product.query.count()
+        except Exception:
+            count = 0
+        return {"total_product_count": count}
+
     @app.errorhandler(404)
     def not_found(e):
         return render_template("404.html"), 404

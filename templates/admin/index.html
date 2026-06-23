@@ -1,17 +1,20 @@
 {% extends "base.html" %}
 {% block title %}后台管理 - 秒杀系统{% endblock %}
 {% block content %}
-<h2>管理后台</h2>
-<div class="admin-cards">
-    <div class="admin-card">
-        <h3>{{ product_count }}</h3>
-        <p>商品总数</p>
-        <a href="{{ url_for('admin.manage_products') }}">管理商品</a>
+<div class="page-header">
+    <h1>管理后台</h1>
+    <p>系统运行概览</p>
+</div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ product_count }}</div>
+        <div class="stat-label">商品总数</div>
+        <a href="{{ url_for('admin.manage_products') }}">管理商品 &rarr;</a>
     </div>
-    <div class="admin-card">
-        <h3>{{ order_count }}</h3>
-        <p>订单总数</p>
-        <a href="{{ url_for('admin.list_orders') }}">查看订单</a>
+    <div class="stat-card">
+        <div class="stat-number">{{ order_count }}</div>
+        <div class="stat-label">订单总数</div>
+        <a href="{{ url_for('admin.list_orders') }}">查看订单 &rarr;</a>
     </div>
 </div>
 {% endblock %}

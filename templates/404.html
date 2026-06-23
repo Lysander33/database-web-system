@@ -2,8 +2,15 @@
 {% block title %}页面不存在 - 秒杀系统{% endblock %}
 {% block content %}
 <div class="error-page">
-    <h1>404</h1>
+    <svg class="error-illustration" viewBox="0 0 200 120" fill="none">
+        <circle cx="60" cy="45" r="28" stroke="#7D9B76" stroke-width="0.8" opacity="0.35"/>
+        <circle cx="140" cy="38" r="18" stroke="#7D9B76" stroke-width="0.7" opacity="0.25"/>
+        <circle cx="100" cy="80" r="12" stroke="#7D9B76" stroke-width="0.6" opacity="0.2"/>
+        <line x1="82" y1="52" x2="118" y2="52" stroke="#7D9B76" stroke-width="0.6" opacity="0.3"/>
+        <line x1="88" y1="58" x2="112" y2="58" stroke="#7D9B76" stroke-width="0.5" opacity="0.2"/>
+    </svg>
+    <div class="error-code">404</div>
     <p>页面不存在</p>
-    <a href="{{ url_for('seckill.index') }}" class="btn">返回首页</a>
+    <a href="{{ url_for('seckill.index') }}" class="btn btn-primary">返回首页</a>
 </div>
 {% endblock %}
