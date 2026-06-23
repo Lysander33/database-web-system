@@ -1,9 +1,18 @@
+import logging
+import os
 from flask import Flask, render_template
 from flask_login import LoginManager
 from config import Config
 from core.models import db, User, Product
 from core.redis_client import init_redis
 from core.seckill import sync_stock_to_redis
+from core.csrf import generate_csrf_token
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 login_manager = LoginManager()
@@ -36,9 +45,25 @@ def create_app():
     app.register_blueprint(seckill_bp, url_prefix="/")
     app.register_blueprint(admin_bp, url_prefix="/admin")
 
+    @app.context_processor
+    def inject_csrf():
+        return {"csrf_token": generate_csrf_token}
+
     @app.errorhandler(404)
     def not_found(e):
         return render_template("404.html"), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        return render_template("500.html"), 500
+
+    @app.after_request
+    def set_security_headers(response):
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "0"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
 
     with app.app_context():
         try:
@@ -53,4 +78,4 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(debug=True)
+    app.run(debug=os.getenv("FLASK_DEBUG", "0") == "1")

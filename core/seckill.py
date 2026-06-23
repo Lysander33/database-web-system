@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import update as sql_update
 
@@ -106,26 +106,35 @@ def do_seckill():
     if result == 0:
         return jsonify({"success": False, "msg": "已售罄"}), 400
 
-    # Persist to SQLite and sync DB stock
-    db.session.execute(
+    result = db.session.execute(
         sql_update(Product)
         .where(Product.id == product_id, Product.stock > 0)
         .values(stock=Product.stock - 1)
     )
+    if result.rowcount == 0:
+        db.session.rollback()
+        return jsonify({"success": False, "msg": "抢购失败，请重试"}), 400
+
     order = Order(user_id=current_user.id, product_id=product_id, status="success")
     db.session.add(order)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({"success": False, "msg": "系统繁忙，请重试"}), 500
 
+    current_app.logger.info("Seckill success: user=%s product=%s order=%s", current_user.id, product_id, order.id)
     return jsonify({"success": True, "msg": "抢购成功！", "order_id": order.id})
 
 
 @seckill_bp.route("/orders")
 @login_required
 def my_orders():
-    orders = (
+    page = request.args.get("page", 1, type=int)
+    pagination = (
         Order.query
         .filter_by(user_id=current_user.id)
         .order_by(Order.created_at.desc())
-        .all()
+        .paginate(page=page, per_page=20, error_out=False)
     )
-    return render_template("orders.html", orders=orders)
+    return render_template("orders.html", orders=pagination.items, pagination=pagination)

@@ -1,13 +1,14 @@
 from datetime import datetime
 
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_required, current_user
 from functools import wraps
 
 from core.models import db, Product, Order
 from core.seckill import sync_stock_to_redis
+from core.csrf import csrf_required
 
-admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+admin_bp = Blueprint("admin", __name__)
 
 
 def admin_required(f):
@@ -31,6 +32,7 @@ def index():
 
 @admin_bp.route("/products", methods=["GET", "POST"])
 @admin_required
+@csrf_required
 def manage_products():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
@@ -44,32 +46,55 @@ def manage_products():
             flash("请填写所有必填字段")
         else:
             try:
-                product = Product(
-                    name=name,
-                    price=float(price),
-                    stock=int(stock),
-                    start_time=datetime.fromisoformat(start_time),
-                    end_time=datetime.fromisoformat(end_time),
-                    description=description,
-                )
-                db.session.add(product)
-                db.session.commit()
-                sync_stock_to_redis(product.id)
-                flash(f"商品「{name}」已创建")
+                price_val = float(price)
+                stock_val = int(stock)
+                start_val = datetime.fromisoformat(start_time)
+                end_val = datetime.fromisoformat(end_time)
+
+                if price_val <= 0 or stock_val <= 0:
+                    flash("价格和库存必须大于0")
+                elif end_val <= start_val:
+                    flash("结束时间必须晚于开始时间")
+                else:
+                    product = Product(
+                        name=name,
+                        price=price_val,
+                        stock=stock_val,
+                        start_time=start_val,
+                        end_time=end_val,
+                        description=description,
+                    )
+                    db.session.add(product)
+                    try:
+                        db.session.commit()
+                    except Exception:
+                        db.session.rollback()
+                        flash("创建失败，请重试")
+                        return redirect(url_for("admin.manage_products"))
+                    sync_stock_to_redis(product.id)
+                    flash(f"商品「{name}」已创建")
+                    current_app.logger.info("Admin %s created product '%s'", current_user.username, name)
             except ValueError:
                 flash("价格、库存或时间格式有误")
         return redirect(url_for("admin.manage_products"))
 
-    products = Product.query.order_by(Product.created_at.desc()).all()
-    return render_template("admin/products.html", products=products)
+    page = request.args.get("page", 1, type=int)
+    pagination = Product.query.order_by(Product.created_at.desc()).paginate(page=page, per_page=20, error_out=False)
+    return render_template("admin/products.html", products=pagination.items, pagination=pagination)
 
 
 @admin_bp.route("/products/<int:product_id>/toggle", methods=["POST"])
 @admin_required
+@csrf_required
 def toggle_product(product_id):
     product = Product.query.get_or_404(product_id)
     product.is_active = not product.is_active
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        flash("操作失败")
+        return redirect(url_for("admin.manage_products"))
     flash(f"商品「{product.name}」已{'上架' if product.is_active else '下架'}")
     return redirect(url_for("admin.manage_products"))
 
@@ -77,5 +102,6 @@ def toggle_product(product_id):
 @admin_bp.route("/orders")
 @admin_required
 def list_orders():
-    orders = Order.query.order_by(Order.created_at.desc()).all()
-    return render_template("admin/orders.html", orders=orders)
+    page = request.args.get("page", 1, type=int)
+    pagination = Order.query.order_by(Order.created_at.desc()).paginate(page=page, per_page=20, error_out=False)
+    return render_template("admin/orders.html", orders=pagination.items, pagination=pagination)

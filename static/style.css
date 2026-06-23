@@ -108,4 +108,12 @@ form button { margin-top: 16px; }
 .admin-card p { color: #636e72; margin: 4px 0 12px; }
 .admin-card a { color: #0984e3; }
 
+.error-page { text-align: center; padding: 60px 0; }
+.error-page h1 { font-size: 4em; color: #b2bec3; margin-bottom: 8px; }
+.error-page p { font-size: 1.1em; color: #636e72; margin: 8px 0 16px; }
+
+.pagination { text-align: center; margin-top: 20px; }
+.pagination .btn-sm { display: inline-block; padding: 6px 16px; margin: 0 4px; }
+.page-info { color: #636e72; margin: 0 12px; }
+
 hr { margin: 24px 0; border: none; border-top: 1px solid #dfe6e9; }

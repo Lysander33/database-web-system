@@ -4,6 +4,7 @@
 <div class="form-wrapper">
     <h2>用户注册</h2>
     <form method="POST">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
         <label>用户名</label>
         <input type="text" name="username" required autofocus>
         <label>密码</label>
