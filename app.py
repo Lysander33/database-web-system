@@ -1,6 +1,6 @@
 import logging
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import LoginManager
 from config import Config
 from core.models import db, User, Product
@@ -18,6 +18,14 @@ logging.basicConfig(
 login_manager = LoginManager()
 login_manager.login_view = "auth.login_page"
 login_manager.login_message = "请先登录"
+
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    if request.path.startswith("/api/"):
+        return jsonify({"success": False, "msg": "请先登录"}), 401
+    flash(login_manager.login_message)
+    return redirect(url_for(login_manager.login_view, next=request.url))
 
 
 @login_manager.user_loader

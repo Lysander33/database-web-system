@@ -47,9 +47,13 @@
         {% endif %}
     </div>
 
-    {% if p.start_time <= now <= p.end_time and p.stock > 0 %}
+    {% if p.start_time <= now <= p.end_time and p.stock > 0 and current_user.is_authenticated %}
     <div class="card-actions">
         <button class="btn btn-primary btn-seckill pulse" data-product-id="{{ p.id }}" style="width:100%">立即抢购</button>
+    </div>
+    {% elif p.start_time <= now <= p.end_time and p.stock > 0 %}
+    <div class="card-actions">
+        <a class="btn btn-primary" href="{{ url_for('auth.login_page') }}" style="width:100%">登录后抢购</a>
     </div>
     {% endif %}
 </div>
