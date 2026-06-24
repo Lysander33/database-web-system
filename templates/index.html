@@ -39,11 +39,11 @@
     <div class="card-meta">
         <span>库存 {{ p.stock }} 件</span>
         {% if now < p.start_time %}
-        <span>{{ (p.start_time - now)|string }} 后开始</span>
+        <span>{{ (p.start_time - now)|countdown }} 后开始</span>
         {% elif now > p.end_time %}
         <span>已结束</span>
         {% else %}
-        <span>{{ (p.end_time - now)|string }} 后结束</span>
+        <span>剩余 {{ (p.end_time - now)|countdown }}</span>
         {% endif %}
     </div>
 

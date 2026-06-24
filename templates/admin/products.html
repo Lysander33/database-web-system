@@ -82,6 +82,10 @@
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-sm {{ 'btn-ghost' if p.is_active else 'btn-primary' }}">{{ "下架" if p.is_active else "上架" }}</button>
                     </form>
+                    <form method="POST" action="{{ url_for('admin.delete_product', product_id=p.id) }}" style="display:inline" onsubmit="return confirm('确定要删除商品「{{ p.name }}」吗？该操作不可撤销。')">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                    </form>
                 </td>
             </tr>
         {% endfor %}

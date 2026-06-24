@@ -45,6 +45,21 @@ def create_app():
     app.register_blueprint(seckill_bp, url_prefix="/")
     app.register_blueprint(admin_bp, url_prefix="/admin")
 
+    @app.template_filter("countdown")
+    def countdown_filter(td):
+        total_seconds = int(td.total_seconds())
+        days, rem = divmod(total_seconds, 86400)
+        hours, rem = divmod(rem, 3600)
+        minutes = rem // 60
+        parts = []
+        if days:
+            parts.append(f"{days}天")
+        if hours:
+            parts.append(f"{hours}时")
+        if minutes or not parts:
+            parts.append(f"{minutes}分")
+        return "".join(parts)
+
     @app.context_processor
     def inject_csrf():
         return {"csrf_token": generate_csrf_token}
@@ -52,7 +67,7 @@ def create_app():
     @app.context_processor
     def inject_stats():
         try:
-            count = Product.query.count()
+            count = Product.query.filter_by(is_deleted=False).count()
         except Exception:
             count = 0
         return {"total_product_count": count}
@@ -75,7 +90,7 @@ def create_app():
 
     with app.app_context():
         try:
-            products = db.session.query(Product).all()
+            products = db.session.query(Product).filter_by(is_deleted=False).all()
             for p in products:
                 sync_stock_to_redis(p.id)
         except Exception:

@@ -44,7 +44,7 @@ def _users_key(product_id):
 
 
 def sync_stock_to_redis(product_id):
-    """Sync product stock from DB to Redis. Call on app startup and after stock changes."""
+    """将商品库存从数据库同步到 Redis，应用启动时及库存变更后调用。"""
     r = get_redis()
     product = db.session.get(Product, product_id)
     if product:
@@ -52,26 +52,26 @@ def sync_stock_to_redis(product_id):
 
 
 def _deduct_stock(product_id):
-    """Atomic stock deduction via Redis Lua script."""
+    """通过 Redis Lua 脚本原子性扣减库存。"""
     r = get_redis()
     result = r.eval(_LUA_SECKILL, 2, _stock_key(product_id), _users_key(product_id), str(current_user.id))
-    return result  # 1=success, 0=sold_out, -1=already_purchased
+    return result  # 1=成功, 0=已售罄, -1=已购买过
 
 
 def _now():
-    return datetime.utcnow()
+    return datetime.now()
 
 
 @seckill_bp.route("/")
 def index():
-    products = Product.query.filter_by(is_active=True).order_by(Product.start_time.asc()).all()
+    products = Product.query.filter_by(is_active=True, is_deleted=False).order_by(Product.start_time.asc()).all()
     now = _now()
     return render_template("index.html", products=products, now=now)
 
 
 @seckill_bp.route("/product/<int:product_id>")
 def product_detail(product_id):
-    product = Product.query.get_or_404(product_id)
+    product = Product.query.filter_by(id=product_id, is_deleted=False).first_or_404()
     return render_template("product_detail.html", product=product, now=_now())
 
 
@@ -91,7 +91,7 @@ def do_seckill():
         return jsonify({"success": False, "msg": "缺少商品ID"}), 400
 
     product = Product.query.get(product_id)
-    if not product or not product.is_active:
+    if not product or not product.is_active or product.is_deleted:
         return jsonify({"success": False, "msg": "商品不存在或已下架"}), 400
 
     now = _now()

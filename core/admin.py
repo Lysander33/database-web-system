@@ -6,6 +6,7 @@ from functools import wraps
 
 from core.models import db, Product, Order
 from core.seckill import sync_stock_to_redis
+from core.redis_client import get_redis
 from core.csrf import csrf_required
 
 admin_bp = Blueprint("admin", __name__)
@@ -25,7 +26,7 @@ def admin_required(f):
 @admin_bp.route("/")
 @admin_required
 def index():
-    product_count = Product.query.count()
+    product_count = Product.query.filter_by(is_deleted=False).count()
     order_count = Order.query.count()
     return render_template("admin/index.html", product_count=product_count, order_count=order_count)
 
@@ -79,7 +80,7 @@ def manage_products():
         return redirect(url_for("admin.manage_products"))
 
     page = request.args.get("page", 1, type=int)
-    pagination = Product.query.order_by(Product.created_at.desc()).paginate(page=page, per_page=20, error_out=False)
+    pagination = Product.query.filter_by(is_deleted=False).order_by(Product.created_at.desc()).paginate(page=page, per_page=20, error_out=False)
     return render_template("admin/products.html", products=pagination.items, pagination=pagination)
 
 
@@ -96,6 +97,26 @@ def toggle_product(product_id):
         flash("操作失败")
         return redirect(url_for("admin.manage_products"))
     flash(f"商品「{product.name}」已{'上架' if product.is_active else '下架'}")
+    return redirect(url_for("admin.manage_products"))
+
+
+@admin_bp.route("/products/<int:product_id>/delete", methods=["POST"])
+@admin_required
+@csrf_required
+def delete_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    product.is_deleted = True
+    product.is_active = False
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        flash("删除失败，请重试")
+        return redirect(url_for("admin.manage_products"))
+    r = get_redis()
+    r.delete(f"seckill:stock:{product_id}", f"seckill:users:{product_id}")
+    flash(f"商品「{product.name}」已删除")
+    current_app.logger.info("Admin %s soft-deleted product '%s'", current_user.username, product.name)
     return redirect(url_for("admin.manage_products"))
 
 

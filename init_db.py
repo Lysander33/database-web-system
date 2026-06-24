@@ -36,7 +36,7 @@ def init():
 
         db.session.commit()
 
-        for p in Product.query.all():
+        for p in Product.query.filter_by(is_deleted=False).all():
             sync_stock_to_redis(p.id)
 
         print("Database initialized with default users and demo product.")
