@@ -150,7 +150,7 @@ Redis 不可用时优雅降级，提示系统繁忙而非直接崩溃。
 
 ### 安全响应头
 
-```python
+```
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
 X-XSS-Protection: 0
