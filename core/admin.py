@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 from functools import wraps
 
 from core.models import db, Product, Order
-from core.seckill import sync_stock_to_redis
+from core.seckill import sync_stock_to_redis, stock_key, users_key
 from core.redis_client import get_redis
 from core.csrf import csrf_required
 
@@ -72,7 +72,10 @@ def manage_products():
                         db.session.rollback()
                         flash("创建失败，请重试")
                         return redirect(url_for("admin.manage_products"))
-                    sync_stock_to_redis(product.id)
+                    try:
+                        sync_stock_to_redis(product.id)
+                    except Exception:
+                        pass
                     flash(f"商品「{name}」已创建")
                     current_app.logger.info("Admin %s created product '%s'", current_user.username, name)
             except ValueError:
@@ -113,8 +116,11 @@ def delete_product(product_id):
         db.session.rollback()
         flash("删除失败，请重试")
         return redirect(url_for("admin.manage_products"))
-    r = get_redis()
-    r.delete(f"seckill:stock:{product_id}", f"seckill:users:{product_id}")
+    try:
+        r = get_redis()
+        r.delete(stock_key(product_id), users_key(product_id))
+    except Exception:
+        pass
     flash(f"商品「{product.name}」已删除")
     current_app.logger.info("Admin %s soft-deleted product '%s'", current_user.username, product.name)
     return redirect(url_for("admin.manage_products"))
@@ -124,5 +130,10 @@ def delete_product(product_id):
 @admin_required
 def list_orders():
     page = request.args.get("page", 1, type=int)
-    pagination = Order.query.order_by(Order.created_at.desc()).paginate(page=page, per_page=20, error_out=False)
+    pagination = (
+        Order.query
+        .options(db.joinedload(Order.user), db.joinedload(Order.product))
+        .order_by(Order.created_at.desc())
+        .paginate(page=page, per_page=20, error_out=False)
+    )
     return render_template("admin/orders.html", orders=pagination.items, pagination=pagination)

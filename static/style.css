@@ -222,11 +222,6 @@ img, svg { display: block; max-width: 100%; }
     margin: 8px 0;
 }
 
-.sidebar-footer {
-    padding-top: 12px;
-    border-top: 0.5px solid var(--border);
-}
-
 .sidebar-user {
     display: flex;
     align-items: center;
@@ -364,10 +359,6 @@ img, svg { display: block; max-width: 100%; }
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 18px;
-}
-
-.bento-grid.featured {
-    grid-template-columns: 1.5fr repeat(auto-fill, minmax(280px, 1fr));
 }
 
 /* ── Product Card ──────────────────────── */
@@ -665,8 +656,7 @@ img, svg { display: block; max-width: 100%; }
 }
 
 .form-group input,
-.form-group textarea,
-.form-group select {
+.form-group textarea {
     width: 100%;
     padding: 11px 14px;
     background: var(--bg-input);
@@ -680,8 +670,7 @@ img, svg { display: block; max-width: 100%; }
 }
 
 .form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.form-group textarea:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-ring);
     background: var(--bg-card);
@@ -951,8 +940,6 @@ img, svg { display: block; max-width: 100%; }
 }
 
 .flash-msg.info { border-left: 3px solid var(--accent); }
-.flash-msg.warning { border-left: 3px solid var(--warning); }
-.flash-msg.error { border-left: 3px solid var(--danger); }
 
 @keyframes slideIn {
     from { opacity: 0; transform: translateX(40px); }
@@ -1018,8 +1005,7 @@ hr {
         bottom: var(--mobile-nav-h);
     }
 
-    .bento-grid,
-    .bento-grid.featured {
+    .bento-grid {
         grid-template-columns: 1fr;
         gap: 12px;
     }

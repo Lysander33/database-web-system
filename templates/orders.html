@@ -71,23 +71,23 @@ function bindCancel(btn) {
     btn.addEventListener('click', function() {
         if (!confirm('确定要取消该订单吗？')) return;
 
-        var orderId = this.dataset.orderId;
-        var self = this;
+        const orderId = this.dataset.orderId;
+        const self = this;
         self.disabled = true;
         self.textContent = '取消中...';
 
-        fetch('/api/order/' + orderId + '/cancel', {
+        fetch('{{ url_for("seckill.cancel_order", order_id=0) }}'.replace('0', orderId), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'}
         })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
+        .then(res => res.json())
+        .then(data => {
             if (data.success) {
-                var row = self.closest('tr');
-                var badge = row.querySelector('.card-badge');
+                const row = self.closest('tr');
+                const badge = row.querySelector('.card-badge');
                 badge.textContent = 'cancelled';
                 badge.className = 'card-badge badge-cancelled';
-                var td = self.parentElement;
+                const td = self.parentElement;
                 td.innerHTML = '<button class="btn-delete" data-order-id="' + orderId + '">删除</button>';
                 bindDelete(td.querySelector('.btn-delete'));
             } else {
@@ -96,7 +96,7 @@ function bindCancel(btn) {
                 self.textContent = '取消';
             }
         })
-        .catch(function() {
+        .catch(() => {
             alert('网络错误，请重试');
             self.disabled = false;
             self.textContent = '取消';
@@ -108,17 +108,17 @@ function bindDelete(btn) {
     btn.addEventListener('click', function() {
         if (!confirm('确定要删除该订单吗？此操作不可撤销。')) return;
 
-        var orderId = this.dataset.orderId;
-        var self = this;
+        const orderId = this.dataset.orderId;
+        const self = this;
         self.disabled = true;
         self.textContent = '删除中...';
 
-        fetch('/api/order/' + orderId + '/delete', {
+        fetch('{{ url_for("seckill.delete_order", order_id=0) }}'.replace('0', orderId), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'}
         })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
+        .then(res => res.json())
+        .then(data => {
             if (data.success) {
                 self.closest('tr').remove();
             } else {
@@ -127,7 +127,7 @@ function bindDelete(btn) {
                 self.textContent = '删除';
             }
         })
-        .catch(function() {
+        .catch(() => {
             alert('网络错误，请重试');
             self.disabled = false;
             self.textContent = '删除';

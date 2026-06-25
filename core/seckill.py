@@ -35,11 +35,11 @@ return 1
 """
 
 
-def _stock_key(product_id):
+def stock_key(product_id):
     return f"seckill:stock:{product_id}"
 
 
-def _users_key(product_id):
+def users_key(product_id):
     return f"seckill:users:{product_id}"
 
 
@@ -48,13 +48,13 @@ def sync_stock_to_redis(product_id):
     r = get_redis()
     product = db.session.get(Product, product_id)
     if product:
-        r.set(_stock_key(product_id), product.stock)
+        r.set(stock_key(product_id), product.stock)
 
 
 def _deduct_stock(product_id):
     """通过 Redis Lua 脚本原子性扣减库存。"""
     r = get_redis()
-    result = r.eval(_LUA_SECKILL, 2, _stock_key(product_id), _users_key(product_id), str(current_user.id))
+    result = r.eval(_LUA_SECKILL, 2, stock_key(product_id), users_key(product_id), str(current_user.id))
     return result  # 1=成功, 0=已售罄, -1=已购买过
 
 
@@ -141,17 +141,24 @@ def cancel_order(order_id):
 
     product = Product.query.get(order.product_id)
     if product and not product.is_deleted:
-        product.stock += 1
-
-    r = get_redis()
-    r.incr(_stock_key(order.product_id))
-    r.srem(_users_key(order.product_id), str(current_user.id))
+        db.session.execute(
+            sql_update(Product)
+            .where(Product.id == order.product_id)
+            .values(stock=Product.stock + 1)
+        )
 
     try:
         db.session.commit()
     except Exception:
         db.session.rollback()
         return jsonify({"success": False, "msg": "系统繁忙，请重试"}), 500
+
+    try:
+        r = get_redis()
+        r.incr(stock_key(order.product_id))
+        r.srem(users_key(order.product_id), str(current_user.id))
+    except Exception:
+        pass
 
     current_app.logger.info("Order cancelled: user=%s order=%s product=%s", current_user.id, order_id, order.product_id)
     return jsonify({"success": True, "msg": "订单已取消"})
@@ -184,6 +191,7 @@ def my_orders():
     page = request.args.get("page", 1, type=int)
     pagination = (
         Order.query
+        .options(db.joinedload(Order.product))
         .filter_by(user_id=current_user.id)
         .order_by(Order.created_at.desc())
         .paginate(page=page, per_page=20, error_out=False)

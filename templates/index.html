@@ -62,27 +62,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-const SECKILL_API = "{{ url_for('seckill.do_seckill') }}";
-document.querySelectorAll('.btn-seckill').forEach(btn => {
-    btn.addEventListener('click', async () => {
-        btn.disabled = true;
-        btn.textContent = '抢购中...';
-        try {
-            const resp = await fetch(SECKILL_API, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({product_id: parseInt(btn.dataset.productId)})
-            });
-            const data = await resp.json();
-            if (data.success) location.reload();
-            else alert(data.msg);
-        } catch (e) {
-            alert('网络错误，请重试');
-        }
-        btn.disabled = false;
-        btn.textContent = '立即抢购';
-    });
-});
-</script>
+{% include '_seckill_js.html' %}
 {% endblock %}
