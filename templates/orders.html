@@ -32,6 +32,7 @@
                 <th>价格</th>
                 <th>状态</th>
                 <th>时间</th>
+                <th>操作</th>
             </tr>
         </thead>
         <tbody>
@@ -40,8 +41,21 @@
                 <td>#{{ o.id }}</td>
                 <td>{{ o.product.name }}</td>
                 <td>&yen;{{ "%.2f"|format(o.product.price) }}</td>
-                <td><span class="card-badge badge-success">{{ o.status }}</span></td>
+                <td>
+                    {% if o.status == "success" %}
+                    <span class="card-badge badge-success">{{ o.status }}</span>
+                    {% elif o.status == "cancelled" %}
+                    <span class="card-badge badge-cancelled">{{ o.status }}</span>
+                    {% endif %}
+                </td>
                 <td>{{ o.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+                <td>
+                    {% if o.status == "success" %}
+                    <button class="btn-cancel" data-order-id="{{ o.id }}">取消</button>
+                    {% elif o.status == "cancelled" %}
+                    <button class="btn-delete" data-order-id="{{ o.id }}">删除</button>
+                    {% endif %}
+                </td>
             </tr>
         {% endfor %}
         </tbody>
@@ -49,4 +63,79 @@
 </div>
 {% include '_pagination.html' %}
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function bindCancel(btn) {
+    btn.addEventListener('click', function() {
+        if (!confirm('确定要取消该订单吗？')) return;
+
+        var orderId = this.dataset.orderId;
+        var self = this;
+        self.disabled = true;
+        self.textContent = '取消中...';
+
+        fetch('/api/order/' + orderId + '/cancel', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                var row = self.closest('tr');
+                var badge = row.querySelector('.card-badge');
+                badge.textContent = 'cancelled';
+                badge.className = 'card-badge badge-cancelled';
+                var td = self.parentElement;
+                td.innerHTML = '<button class="btn-delete" data-order-id="' + orderId + '">删除</button>';
+                bindDelete(td.querySelector('.btn-delete'));
+            } else {
+                alert(data.msg);
+                self.disabled = false;
+                self.textContent = '取消';
+            }
+        })
+        .catch(function() {
+            alert('网络错误，请重试');
+            self.disabled = false;
+            self.textContent = '取消';
+        });
+    });
+}
+
+function bindDelete(btn) {
+    btn.addEventListener('click', function() {
+        if (!confirm('确定要删除该订单吗？此操作不可撤销。')) return;
+
+        var orderId = this.dataset.orderId;
+        var self = this;
+        self.disabled = true;
+        self.textContent = '删除中...';
+
+        fetch('/api/order/' + orderId + '/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                self.closest('tr').remove();
+            } else {
+                alert(data.msg);
+                self.disabled = false;
+                self.textContent = '删除';
+            }
+        })
+        .catch(function() {
+            alert('网络错误，请重试');
+            self.disabled = false;
+            self.textContent = '删除';
+        });
+    });
+}
+
+document.querySelectorAll('.btn-cancel').forEach(bindCancel);
+document.querySelectorAll('.btn-delete').forEach(bindDelete);
+</script>
 {% endblock %}

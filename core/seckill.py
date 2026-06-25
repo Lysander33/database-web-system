@@ -127,6 +127,57 @@ def do_seckill():
     return jsonify({"success": True, "msg": "抢购成功！", "order_id": order.id})
 
 
+@seckill_bp.route("/api/order/<int:order_id>/cancel", methods=["POST"])
+@login_required
+def cancel_order(order_id):
+    order = Order.query.filter_by(id=order_id, user_id=current_user.id).first()
+    if not order:
+        return jsonify({"success": False, "msg": "订单不存在"}), 404
+
+    if order.status != "success":
+        return jsonify({"success": False, "msg": "该订单无法取消"}), 400
+
+    order.status = "cancelled"
+
+    product = Product.query.get(order.product_id)
+    if product and not product.is_deleted:
+        product.stock += 1
+
+    r = get_redis()
+    r.incr(_stock_key(order.product_id))
+    r.srem(_users_key(order.product_id), str(current_user.id))
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({"success": False, "msg": "系统繁忙，请重试"}), 500
+
+    current_app.logger.info("Order cancelled: user=%s order=%s product=%s", current_user.id, order_id, order.product_id)
+    return jsonify({"success": True, "msg": "订单已取消"})
+
+
+@seckill_bp.route("/api/order/<int:order_id>/delete", methods=["POST"])
+@login_required
+def delete_order(order_id):
+    order = Order.query.filter_by(id=order_id, user_id=current_user.id).first()
+    if not order:
+        return jsonify({"success": False, "msg": "订单不存在"}), 404
+
+    if order.status != "cancelled":
+        return jsonify({"success": False, "msg": "只能删除已取消的订单"}), 400
+
+    db.session.delete(order)
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({"success": False, "msg": "系统繁忙，请重试"}), 500
+
+    current_app.logger.info("Order deleted: user=%s order=%s", current_user.id, order_id)
+    return jsonify({"success": True, "msg": "订单已删除"})
+
+
 @seckill_bp.route("/orders")
 @login_required
 def my_orders():

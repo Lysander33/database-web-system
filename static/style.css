@@ -443,6 +443,7 @@ img, svg { display: block; max-width: 100%; }
 .badge-upcoming { background: var(--warning-light); color: var(--warning); }
 .badge-ended { background: var(--bg-input); color: var(--text-muted); }
 .badge-success { background: #E8F5EC; color: var(--success); }
+.badge-cancelled { background: #FEF3F2; color: var(--danger); }
 
 .card-price {
     font-family: var(--font-display);
@@ -570,6 +571,59 @@ img, svg { display: block; max-width: 100%; }
 
 .btn-seckill.pulse {
     animation: pulse-ring 2s ease-out infinite;
+}
+
+.btn-cancel {
+    background: transparent;
+    color: var(--danger);
+    border: 0.5px solid var(--danger);
+    padding: 4px 14px;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all 200ms var(--ease-out);
+}
+
+.btn-cancel:hover {
+    background: var(--danger);
+    color: #fff;
+}
+
+.btn-cancel:disabled {
+    background: var(--bg-input);
+    color: var(--text-muted);
+    border-color: var(--border);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn-delete {
+    background: transparent;
+    color: var(--text-muted);
+    border: 0.5px solid var(--border);
+    padding: 4px 14px;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all 200ms var(--ease-out);
+}
+
+.btn-delete:hover {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
+}
+
+.btn-delete:disabled {
+    background: var(--bg-input);
+    color: var(--text-muted);
+    border-color: var(--border);
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 @keyframes pulse-ring {
